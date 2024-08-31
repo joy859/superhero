@@ -1,11 +1,24 @@
 import React from 'react'
-import Loginpage from './pages/loginpage';
+import {BrowserRouter, Routes,Route, Navigate} from "react-router-dom"
+import LoginPage from './pages/loginpage';
+import ListPage from './pages/ListPage';
+import ChatPage from './pages/ChatPage';
+import ProfilePage from './pages/ProfilePage';
+import Layout from './pages/Layout';
 
 function App(){
   return ( 
-  <div>
-    <Loginpage />
-  </div>
+  <BrowserRouter>
+   <Routes>
+   <Route path='/auth' element ={<LoginPage/>}/>
+    <Route path='/dashboard' element={<Layout />}>
+     <Route index element= {<ListPage />} />
+     <Route path='chat' element={<ChatPage />} />
+      <Route path='profile' element={<ProfilePage />} />
+      </Route>
+      <Route path='*' element={<Navigate to='/dashboard'/>} />
+   </Routes>
+  </BrowserRouter>
   );
 }
 
