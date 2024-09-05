@@ -67,7 +67,10 @@ useEffect(() =>{
           {getCurrentPage() ==='chat' ? (
             
        <Icon
-        IconName = {FiList} onClick={() => handleGoToPage('')}  /> 
+        IconName = {FiList} 
+        onClick={() => handleGoToPage('')} 
+        reduceOpacityOnHover ={false}
+        /> 
       ): getCurrentPage() ==='profile' ?(
         
           <>
@@ -76,7 +79,9 @@ useEffect(() =>{
          <Icon 
          IconName={BsFillChatFill}
         ping={true}
-        onClick={() => handleGoToPage ('chat')}/>
+        onClick={() => handleGoToPage ('chat')}
+        reduceOpacityOnHover ={false}
+        />
 
 
           </>
@@ -87,7 +92,9 @@ useEffect(() =>{
        <Icon 
        IconName={BsFillChatFill}
         ping={true}
-        onClick={() => handleGoToPage ('chat')}/>
+        onClick={() => handleGoToPage ('chat')}
+        reduceOpacityOnHover ={false}
+        />
         </>
       )}
 
