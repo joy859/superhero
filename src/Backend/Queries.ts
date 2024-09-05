@@ -1,4 +1,6 @@
-import { authDataType, userType } from './../Types';
+import { signOut } from 'firebase/auth';
+import { authDataType, userType, } from './../Types';
+
 
 
 import {createUserWithEmailAndPassword} from '@firebase/auth';
@@ -9,7 +11,7 @@ import { setLoadingType } from '../Types';
 import { signInWithEmailAndPassword} from '@firebase/auth';
 import { Await, NavigateFunction } from 'react-router-dom';
 import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
-import { defaultUser, setUser, setUsers } from '../Redux/userSlice';
+import userSlice, { defaultUser, setUser, setUsers, userStorageName } from '../Redux/userSlice';
 import { AppDispatch } from '../Redux/store';
 import ConvertTime from '../utils/ConvertTime';
 import AvatarGenerator from '../utils/avatarGenerator';
@@ -73,7 +75,7 @@ setLoading(true);
      
 
 };
-
+// sign in a user
 export const BE_signIn =(
      data:authDataType,
 setLoading:setLoadingType,
@@ -110,6 +112,35 @@ dispatch:AppDispatch
         setLoading(false);
     });
 } ;
+
+   //sign out
+   export const BE_signOut = (dispatch:AppDispatch ,gotTo:NavigateFunction ,setloading:setLoadingType) =>{
+    setloading(true)
+    //logout in fire base
+    signOut(auth) .then (async() =>{
+      //route to auth page
+    gotTo('/auth');
+    //set user offline
+    await updateUserInfo({isOffline:true});
+//set currentselected  user to empty user
+dispatch(setUser(defaultUser));
+
+    //remove from local storage
+
+    localStorage.removeItem(userStorageName);
+    
+
+    }).catch (err=> CatchErr(err))
+   
+   };
+   //get user from local storage
+   export const getStorageUser=() =>{
+  const usr= localStorage.getItem (userStorageName)
+    if(usr) return JSON.parse(usr)
+      else return null;
+  
+};
+
     //add user to collection 
 const addUserToCollection =async(
     id:string,
@@ -187,9 +218,4 @@ if(id){
 }
 };
 
-const getStorageUser=() =>{
-  const usr= localStorage.getItem ("superhero_user")
-    if(usr) return JSON.parse(usr)
-      else return null;
-  
-}
+
