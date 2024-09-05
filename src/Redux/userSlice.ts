@@ -22,7 +22,7 @@ const userSlice=createSlice({
     initialState,
     reducers:{
         setUser:(state,action) =>{
-            const user =action.payload
+            const user =action.payload;
         //store user in local storage
         localStorage.setItem('superhero_user',JSON.stringify(user))
         //set logged in user
