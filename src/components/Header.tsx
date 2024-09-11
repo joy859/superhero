@@ -32,7 +32,7 @@ useEffect(() => {
 goTo('/auth');
 
   }
-} ,[]);
+} ,[dispatch ,goTo]);
   
   
   
@@ -58,7 +58,7 @@ useEffect(() =>{
     return localStorage.getItem('superhero-page')
   }
   return (
-    <div className ='flex flex-wrap sm:flex-row gap-5 items-center justify-between drop-shadow-md bg-gradient-to-r from-myBlue to-myPink px-5 py-5 md:py-2 text-white'>
+    <div className ='flex flex-wrap z-10 sm:flex-row gap-5 items-center justify-between drop-shadow-md bg-gradient-to-r from-myBlue to-myPink px-5 py-5 md:py-2 text-white'>
         <img className='w-[70px] drop-shadow-md cursor-pointer'
         src ={logo}
         alt='logo'
@@ -74,7 +74,10 @@ useEffect(() =>{
       ): getCurrentPage() ==='profile' ?(
         
           <>
-          <Icon IconName={FiList} onClick={() => handleGoToPage('')}/>
+          <Icon 
+           reduceOpacityOnHover ={false}
+          IconName={FiList} 
+          onClick={() => handleGoToPage('')}/>
           
          <Icon 
          IconName={BsFillChatFill}
@@ -98,7 +101,7 @@ useEffect(() =>{
         </>
       )}
 
-       <div className="group relative">
+       <div className="group relative ">
        <UserHeaderProfile user={CurrentUser}/>
        <div className="absolute pt-5 hidden group-hover:block w-full min-w-max">
        <ul className='w-full bg-white overflow-hidden rounded-md shadow-md text-gray-700 pt-1'>
