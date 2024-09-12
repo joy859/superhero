@@ -11,6 +11,8 @@ import { toastErr, toastSucc } from "../utils/toast";
 import CatchErr from "../utils/catchErr";
 import {
   authDataType,
+  chatType,
+  messageType,
   setLoadingType,
   taskListType,
   taskType,
@@ -36,6 +38,7 @@ import {
 } from "@firebase/firestore";
 import {
   defaultUser,
+  setAlertProps,
   setUser,
   setUsers,
   userStorageName,
@@ -55,6 +58,7 @@ import {
   setTaskList,
   setTaskListTasks,
 } from "../Redux/taskListSlice";
+import { setChats, setCurrentMessages } from "../Redux/chatsSlice";
 
 // collection names
 const usersColl = "users";
@@ -612,4 +616,185 @@ export const getTasksForTaskList = async (
 
   dispatch(setTaskListTasks({ listId, tasks }));
   setLoading(false);
+};
+
+// -------------------------------- FOR CHATS -------------------------------
+
+// start a chat
+export const BE_startChat = async (
+  dispatch: AppDispatch,
+  rId: string,
+  rName: string,
+  setLoading: setLoadingType
+) => {
+  const sId = getStorageUser().id;
+  setLoading(true);
+
+  // check if chat exists first
+  const q = query(
+    collection(db, chatsColl),
+    or(
+      and(where("senderId", "==", sId), where("recieverId", "==", rId)),
+      and(where("senderId", "==", rId), where("recieverId", "==", sId))
+    )
+  );
+  const res = await getDocs(q);
+
+  // if you find no chat with this two ids then create one
+  if (res.empty) {
+    const newChat = await addDoc(collection(db, chatsColl), {
+      senderId: sId,
+      recieverId: rId,
+      lastMsg: "",
+      updatedAt: serverTimestamp(),
+      senderToRecieverNewMsgCount: 0,
+      recieverToSenderNewMsgCount: 0,
+    });
+
+    const newChatSnapshot = await getDoc(doc(db, newChat.path));
+
+    if (!newChatSnapshot.exists()) {
+      toastErr("BE_startChat: No such document");
+    }
+    setLoading(false);
+    dispatch(setAlertProps({ open: false }));
+  } else {
+    toastErr("You already started chatting with " + rName);
+    setLoading(false);
+    dispatch(setAlertProps({ open: false }));
+  }
+};
+
+// get users chats
+export const BE_getChats = async (dispatch: AppDispatch) => {
+  const id = getStorageUser().id;
+
+  const q = query(
+    collection(db, chatsColl),
+    or(where("senderId", "==", id), where("recieverId", "==", id)),
+    orderBy("updatedAt", "desc")
+  );
+
+  onSnapshot(q, (chatSnapshot) => {
+    const chats: chatType[] = [];
+
+    chatSnapshot.forEach((chat) => {
+      const {
+        senderId,
+        recieverId,
+        lastMsg,
+        updatedAt,
+        recieverToSenderNewMsgCount,
+        senderToRecieverNewMsgCount,
+      } = chat.data();
+
+      chats.push({
+        id: chat.id,
+        senderId,
+        recieverId,
+        lastMsg,
+        updatedAt,
+        recieverToSenderNewMsgCount,
+        senderToRecieverNewMsgCount,
+        receiverId: undefined
+      });
+    });
+
+    console.log("CHATS", chats);
+    dispatch(setChats(chats));
+  });
+};
+
+// get users messages
+export const BE_getMsgs = async (
+  dispatch: AppDispatch,
+  chatId: string,
+  setLoading: setLoadingType
+) => {
+  setLoading(true);
+
+  const q = query(
+    collection(db, chatsColl, chatId, messagesColl),
+    orderBy("createdAt", "asc")
+  );
+
+  onSnapshot(q, (messagesSnapshot) => {
+    let msgs: messageType[] = [];
+
+    messagesSnapshot.forEach((msg) => {
+      const { senderId, content, createdAt } = msg.data();
+      msgs.push({
+        id: msg.id,
+        senderId,
+        content,
+        createdAt: createdAt
+          ? ConvertTime(createdAt.toDate())
+          : "no date yet: all messages",
+      });
+    });
+
+    dispatch(setCurrentMessages(msgs));
+    setLoading(false);
+  });
+};
+
+// get users messages
+export const BE_sendMsgs = async (
+  chatId: string,
+  data: messageType,
+  setLoading: setLoadingType
+) => {
+  setLoading(true);
+
+  const res = await addDoc(collection(db, chatsColl, chatId, messagesColl), {
+    ...data,
+    createdAt: serverTimestamp(),
+  });
+
+  const newMsg = await getDoc(doc(db, res.path));
+  if (newMsg.exists()) {
+    setLoading(false);
+    // reset new message count
+    await updateNewMsgCount(chatId, true);
+    await updateLastMsg(chatId, newMsg.data().content);
+    await updateUserInfo({}); // update last seen
+  }
+};
+
+// function to check if I created a chat
+export const iCreatedChat = (senderId: string) => {
+  const myId = getStorageUser().id;
+  return myId === senderId;
+};
+
+// updat new message count for user
+export const updateNewMsgCount = async (chatId: string, reset?: boolean) => {
+  const chat = await getDoc(doc(db, chatsColl, chatId));
+
+  let senderToRecieverNewMsgCount = chat.data()?.senderToRecieverNewMsgCount;
+  let recieverToSenderNewMsgCount = chat.data()?.recieverToSenderNewMsgCount;
+
+  if (iCreatedChat(chat.data()?.senderId)) {
+    if (reset) recieverToSenderNewMsgCount = 0;
+    else senderToRecieverNewMsgCount++;
+  } else {
+    if (reset) senderToRecieverNewMsgCount = 0;
+    else recieverToSenderNewMsgCount++;
+  }
+
+  await updateDoc(doc(db, chatsColl, chatId), {
+    updatedAt: serverTimestamp(),
+    senderToRecieverNewMsgCount,
+    recieverToSenderNewMsgCount,
+  });
+};
+
+// update last message
+const updateLastMsg = async (chatId: string, lastMsg: string) => {
+  await updateNewMsgCount(chatId);
+  // await message count here
+  await updateDoc(doc(db, chatsColl, chatId), {
+    lastMsg,
+    updatedAt: serverTimestamp(),
+  });
 };

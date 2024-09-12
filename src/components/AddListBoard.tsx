@@ -28,6 +28,7 @@ const AddListBoard: React.FC = () => {
        IconName={MdAdd}
         className="block md:hidden" 
           loading ={addLoading} 
+          reduceOpacityOnHover={false}
             />
     </>
   );
