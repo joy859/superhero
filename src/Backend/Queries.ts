@@ -143,7 +143,7 @@ export const BE_signIn = (
     });
 };
 
-// signout
+// sign out
 export const BE_signOut = (
   dispatch: AppDispatch,
   goTo: NavigateFunction,
@@ -199,7 +199,7 @@ export const BE_saveProfile = async (
         .catch((err) => CatchErr(err));
     }
 
-    // update passsword if present
+    // update password if present
     if (password && auth.currentUser) {
       updatePassword(auth.currentUser, password)
         .then(() => {
@@ -269,7 +269,7 @@ export const BE_getAllUsers = async (
 ) => {
   setLoading(true);
 
-  // get all users except the current signin one, those online ontop
+  // get all users except the current sign in one, those online on top
   const q = query(collection(db, usersColl), orderBy("isOnline", "desc"));
   onSnapshot(q, (usersSnapshot) => {
     let users: userType[] = [];
@@ -353,7 +353,7 @@ const addUserToCollection = async (
     email,
     creationTime: serverTimestamp(),
     lastSeen: serverTimestamp(),
-    bio: `Hi! my name is ${username}, thanks to Desmond I understand React and Typescript now, and I'm confortable working with them. I can also build beautiful user interfaces`,
+    bio: `Hi! my name is ${username}, thanks to joy I understand React and Typescript now, and I'm comfortable working with them. I can also build beautiful user interfaces`,
   });
 
   return getUserInfo(id);
@@ -386,7 +386,7 @@ const updateUserInfo = async ({
       ...(username && { username }),
       ...(isOnline && { isOnline }),
       ...(isOffline && { isOnline: false }),
-      ...(img && { img }), // img:"someimage"
+      ...(img && { img }), // img:"some image"
       lastSeen: serverTimestamp(),
     });
   }
@@ -767,7 +767,7 @@ export const iCreatedChat = (senderId: string) => {
   return myId === senderId;
 };
 
-// updat new message count for user
+// update new message count for user
 export const updateNewMsgCount = async (chatId: string, reset?: boolean) => {
   const chat = await getDoc(doc(db, chatsColl, chatId));
 
